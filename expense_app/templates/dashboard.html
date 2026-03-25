@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExpenseIQ — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <span class="brand-icon">💡</span>
+    <span class="brand-name">ExpenseIQ</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-view="dashboard" onclick="switchView('dashboard',this)">
+      <span class="nav-icon">📊</span><span>Dashboard</span>
+    </a>
+    <a href="#" class="nav-item" data-view="transactions" onclick="switchView('transactions',this)">
+      <span class="nav-icon">💳</span><span>Transactions</span>
+    </a>
+    <a href="#" class="nav-item" data-view="reports" onclick="switchView('reports',this)">
+      <span class="nav-icon">📈</span><span>Reports</span>
+    </a>
+    <a href="#" class="nav-item" data-view="budgets" onclick="switchView('budgets',this)">
+      <span class="nav-icon">🎯</span><span>Budgets</span>
+    </a>
+    <a href="#" class="nav-item" data-view="categories" onclick="switchView('categories',this)">
+      <span class="nav-icon">🏷️</span><span>Categories</span>
+    </a>
+    <a href="#" class="nav-item" data-view="insights" onclick="switchView('insights',this)">
+      <span class="nav-icon">🤖</span><span>AI Insights</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">{{ user.username[0].upper() }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ user.username }}</div>
+        <div class="user-email">{{ user.email }}</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">⇥ Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn-add-txn" onclick="openModal('add-transaction-modal')">+ Add Transaction</button>
+    </div>
+  </header>
+
+  <!-- ALERTS BANNER -->
+  <div id="alerts-container"></div>
+
+  <!-- VIEWS -->
+  <!-- DASHBOARD VIEW -->
+  <section class="view active" id="view-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card income-card">
+        <div class="stat-label">Total Income</div>
+        <div class="stat-value" id="stat-income">₹0</div>
+        <div class="stat-icon">💰</div>
+      </div>
+      <div class="stat-card expense-card">
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-value" id="stat-expense">₹0</div>
+        <div class="stat-icon">💸</div>
+      </div>
+      <div class="stat-card balance-card">
+        <div class="stat-label">Net Balance</div>
+        <div class="stat-value" id="stat-balance">₹0</div>
+        <div class="stat-icon">⚖️</div>
+      </div>
+      <div class="stat-card txn-card">
+        <div class="stat-label">This Month</div>
+        <div class="stat-value" id="stat-month-expense">₹0</div>
+        <div class="stat-icon">📅</div>
+      </div>
+    </div>
+    <div class="charts-row">
+      <div class="chart-card wide">
+        <div class="chart-header"><h3>Income vs Expenses</h3><span class="chart-sub">Last 12 months</span></div>
+        <div class="chart-wrap"><canvas id="trend-chart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><h3>Spending by Category</h3><span class="chart-sub">This month</span></div>
+        <div class="chart-wrap pie-wrap"><canvas id="category-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="section-header">
+      <h3>Recent Transactions</h3>
+      <a href="#" onclick="switchView('transactions', document.querySelector('[data-view=transactions]'))">View all →</a>
+    </div>
+    <div id="recent-txns" class="txn-list"></div>
+  </section>
+
+  <!-- TRANSACTIONS VIEW -->
+  <section class="view" id="view-transactions">
+    <div class="view-controls">
+      <div class="filter-bar">
+        <select id="filter-type" onchange="loadTransactions()">
+          <option value="">All Types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <select id="filter-category" onchange="loadTransactions()">
+          <option value="">All Categories</option>
+        </select>
+        <input type="date" id="filter-start" onchange="loadTransactions()">
+        <input type="date" id="filter-end" onchange="loadTransactions()">
+      </div>
+      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+    <div id="txn-table-container">
+      <table class="txn-table">
+        <thead><tr><th>Date</th><th>Category</th><th>Subcategory</th><th>Notes</th><th>Type</th><th>Amount</th><th>Actions</th></tr></thead>
+        <tbody id="txn-table-body"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+
+  <!-- REPORTS VIEW -->
+  <section class="view" id="view-reports">
+    <div class="report-tabs">
+      <button class="rtab active" onclick="loadReport('daily',this)">Daily</button>
+      <button class="rtab" onclick="loadReport('weekly',this)">Weekly</button>
+      <button class="rtab" onclick="loadReport('monthly',this)">Monthly</button>
+      <button class="rtab" onclick="loadReport('yearly',this)">Yearly</button>
+    </div>
+    <div class="report-period-controls" id="report-period-controls"></div>
+    <div class="report-stats" id="report-stats"></div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-header"><h3>Category Breakdown</h3></div>
+        <div class="chart-wrap pie-wrap"><canvas id="report-pie-chart"></canvas></div>
+      </div>
+      <div class="chart-card wide">
+        <div class="chart-header"><h3>Expense Categories</h3></div>
+        <div class="chart-wrap"><canvas id="report-bar-chart"></canvas></div>
+      </div>
+    </div>
+    <div class="section-header"><h3>Category Details</h3></div>
+    <div id="report-breakdown" class="breakdown-grid"></div>
+  </section>
+
+  <!-- BUDGETS VIEW -->
+  <section class="view" id="view-budgets">
+    <div class="view-controls">
+      <h3 id="budget-month-label"></h3>
+      <button class="btn-add-txn" onclick="openModal('add-budget-modal')">+ Set Budget</button>
+    </div>
+    <div id="budgets-grid" class="budgets-grid"></div>
+  </section>
+
+  <!-- CATEGORIES VIEW -->
+  <section class="view" id="view-categories">
+    <div class="view-controls">
+      <div class="filter-bar">
+        <select id="cat-type-filter" onchange="loadCategories()">
+          <option value="">All Types</option>
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </div>
+      <button class="btn-add-txn" onclick="openModal('add-category-modal')">+ Add Category</button>
+    </div>
+    <div id="categories-grid" class="categories-grid"></div>
+  </section>
+
+  <!-- AI INSIGHTS VIEW -->
+  <section class="view" id="view-insights">
+    <div class="insights-header">
+      <div>
+        <h2>AI-Powered Insights</h2>
+        <p>Smart analysis of your spending patterns</p>
+      </div>
+      <button class="btn-refresh" onclick="loadInsights()">↻ Refresh</button>
+    </div>
+    <div id="insights-grid" class="insights-grid"></div>
+    <div class="section-header"><h3>Expense Prediction</h3></div>
+    <div id="prediction-card" class="prediction-card"></div>
+  </section>
+</main>
+
+<!-- MODALS -->
+<!-- Add Transaction Modal -->
+<div class="modal-overlay" id="add-transaction-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="txn-modal-title">Add Transaction</h3>
+      <button class="modal-close" onclick="closeModal('add-transaction-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-txn-id">
+      <div class="type-toggle">
+        <button class="type-btn expense-btn active" id="type-expense" onclick="setTxnType('expense')">💸 Expense</button>
+        <button class="type-btn income-btn" id="type-income" onclick="setTxnType('income')">💰 Income</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" id="txn-amount" placeholder="0.00" min="0" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Date & Time</label>
+          <input type="datetime-local" id="txn-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="txn-category" onchange="loadSubcategories()">
+            <option value="">Select category...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Subcategory</label>
+          <select id="txn-subcategory">
+            <option value="">Select subcategory...</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <input type="text" id="txn-notes" placeholder="What was this for?">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('add-transaction-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveTransaction()">Save Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal-overlay" id="add-category-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Category</h3>
+      <button class="modal-close" onclick="closeModal('add-category-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category Name</label>
+          <input type="text" id="cat-name" placeholder="e.g. Groceries">
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="cat-type">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Icon (emoji)</label>
+          <input type="text" id="cat-icon" placeholder="🛍️" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Color</label>
+          <input type="color" id="cat-color" value="#6366f1">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('add-category-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveCategory()">Add Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Subcategory Modal -->
+<div class="modal-overlay" id="add-subcategory-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Subcategory</h3>
+      <button class="modal-close" onclick="closeModal('add-subcategory-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="sub-cat-id">
+      <div class="form-group">
+        <label>Subcategory Name</label>
+        <input type="text" id="sub-name" placeholder="e.g. Weekly Shopping">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('add-subcategory-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveSubcategory()">Add Subcategory</button>
+    </div>
+  </div>
+</div>
+
+<!-- Budget Modal -->
+<div class="modal-overlay" id="add-budget-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Set Monthly Budget</h3>
+      <button class="modal-close" onclick="closeModal('add-budget-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select id="budget-category"></select>
+        </div>
+        <div class="form-group">
+          <label>Monthly Budget (₹)</label>
+          <input type="number" id="budget-amount" placeholder="5000" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('add-budget-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveBudget()">Set Budget</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>
