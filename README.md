@@ -1,19 +1,37 @@
-💰 Expense Management System
-A simple web-based Expense Management System built using Flask that helps users track income, expenses, budgets, and view basic analytics.
+# 💰 Expense IQ – Expense Management System
 
-🚀 Features
-User registration and login
-Add, edit, and delete income & expenses
-Custom categories and subcategories
-Real-time balance calculation
-Monthly and yearly reports
-Budget tracking with alerts
-Basic AI insights on spending
-Expense prediction using Linear Regression
-Export data to CSV
----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-🏗️ Tech Stack
-Backend: Flask (Python), SQLite, SQLAlchemy
-Frontend: HTML, CSS, JavaScript
-Charts: Chart.js
-ML: Scikit-learn
+**Expense IQ** is a web-based Expense Management System built with Flask that enables users to efficiently track their income, expenses, budgets, and gain meaningful financial insights through analytics and basic machine learning.
+
+---
+
+## 🚀 Features
+
+- Secure user registration and authentication  
+- Add, edit, and delete income and expense transactions  
+- Create and manage custom categories and subcategories  
+- Real-time balance calculation (income, expenses, and net balance)  
+- Generate monthly and yearly financial reports  
+- Budget tracking with automated alerts  
+- AI-based insights to analyze spending patterns  
+- Expense prediction using Linear Regression  
+- Export transaction data to CSV  
+
+---
+
+## 🏗️ Tech Stack
+
+### Backend
+- Flask (Python)  
+- SQLite  
+- SQLAlchemy ORM  
+
+### Frontend
+- HTML  
+- CSS  
+- JavaScript  
+
+### Data Visualization
+- Chart.js  
+
+### Machine Learning
+- Scikit-learn  
